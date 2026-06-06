@@ -253,12 +253,32 @@ class App(ctk.CTk):
         """打开录制保存文件夹"""
         path = self.config_data.get("output", {}).get("recording_path", "")
         if not path:
-            # 默认 OBS 录制路径
-            path = os.path.expandvars(r"%APPDATA%\obs-studio")
-        if os.path.isdir(path):
+            # 从 OBS 配置文件读取实际录制路径
+            path = self._get_obs_recording_path()
+        if path and os.path.isdir(path):
             os.startfile(path)
         else:
             self._append_log(f"路径不存在: {path}")
+
+    def _get_obs_recording_path(self) -> str:
+        """从 OBS 配置文件读取当前录制路径"""
+        import configparser
+        obs_profiles = os.path.expandvars(r"%APPDATA%\obs-studio\basic\profiles")
+        if not os.path.isdir(obs_profiles):
+            return ""
+        # 遍历所有 profile，找最近修改的
+        for name in sorted(os.listdir(obs_profiles), reverse=True):
+            ini_path = os.path.join(obs_profiles, name, "basic.ini")
+            if os.path.isfile(ini_path):
+                cfg = configparser.ConfigParser()
+                cfg.read(ini_path, encoding="utf-8")
+                # 优先读高级模式路径
+                path = cfg.get("AdvOut", "RecFilePath", fallback="")
+                if not path:
+                    path = cfg.get("SimpleOutput", "FilePath", fallback="")
+                if path:
+                    return path
+        return ""
 
     def _save_config(self):
         """保存配置到 config.yaml"""
