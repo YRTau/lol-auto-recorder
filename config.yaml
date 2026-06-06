@@ -1,0 +1,14 @@
+obs:
+  host: "localhost"
+  port: 4455
+  password: ""  # OBS WebSocket 密码，在 OBS → 工具 → WebSocket 设置中查看
+
+monitor:
+  process_name: "League of Legends.exe"  # 游戏进程名（不是客户端 LeagueClient.exe）
+  poll_interval: 3       # 轮询间隔（秒）
+  startup_delay: 10      # 检测到进程后等待多久再开始录制（秒），等游戏加载完
+  cooldown: 5            # 进程消失后等待多久再停止录制（秒），防止游戏崩溃重启误判
+
+output:
+  recording_path: ""  # 留空，使用 OBS 英雄联盟配置文件中的路径 (F:/OBS录制F/LOLRankReplay)
+  filename_template: "LOL_{date}_{time}"  # 文件名模板，{date} 和 {time} 会被替换
