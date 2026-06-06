@@ -1,7 +1,7 @@
 obs:
   host: "localhost"
   port: 4455
-  password: ""  # OBS WebSocket 密码，在 OBS → 工具 → WebSocket 设置中查看
+  password: "MeAZbpUBSSyh8vCq"  # OBS WebSocket 密码
 
 monitor:
   process_name: "League of Legends.exe"  # 游戏进程名（不是客户端 LeagueClient.exe）

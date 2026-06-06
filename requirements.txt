@@ -1,3 +1,6 @@
 psutil>=5.9.0
 obsws-python>=1.0.0
 PyYAML>=6.0
+customtkinter>=5.2.0
+pystray>=0.19.0
+Pillow>=9.0.0
