@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import threading
 from datetime import datetime
@@ -74,6 +75,9 @@ class App(ctk.CTk):
         # 状态栏
         self._build_status_bar()
 
+        # 磁盘占用
+        self._build_disk_info()
+
         # 启停按钮
         self._build_toggle_button()
 
@@ -104,6 +108,18 @@ class App(ctk.CTk):
         self.rec_dot.pack(side="left", padx=(0, 5))
         self.rec_label = ctk.CTkLabel(rec_frame, text="空闲", font=("", 13))
         self.rec_label.pack(side="left")
+
+    def _build_disk_info(self):
+        frame = ctk.CTkFrame(self)
+        frame.pack(fill="x", padx=20, pady=(5, 5))
+
+        # 一个 label 显示全部信息，居中
+        self.disk_label = ctk.CTkLabel(frame, text="加载中...", font=("", 12))
+        self.disk_label.pack(fill="x", padx=15, pady=8, anchor="center")
+
+        # 每 10 秒刷新一次
+        self._update_disk_info()
+        self.after(10000, self._update_disk_info)
 
     def _build_toggle_button(self):
         frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -221,6 +237,56 @@ class App(ctk.CTk):
                 fg_color=COLORS["green"],
                 hover_color="#16a34a",
             )
+
+    def _update_disk_info(self):
+        """更新磁盘占用信息"""
+        rec_path = self._get_obs_recording_path()
+        if not rec_path:
+            self.disk_label.configure(text="未找到录制路径", text_color=COLORS["red"])
+            self.after(10000, self._update_disk_info)
+            return
+
+        # 计算录制文件夹大小
+        folder_size = 0
+        file_count = 0
+        try:
+            for f in os.listdir(rec_path):
+                fp = os.path.join(rec_path, f)
+                if os.path.isfile(fp):
+                    folder_size += os.path.getsize(fp)
+                    file_count += 1
+        except OSError:
+            pass
+
+        # 获取磁盘可用空间
+        try:
+            usage = shutil.disk_usage(rec_path)
+            free_gb = usage.free / (1024 ** 3)
+            total_gb = usage.total / (1024 ** 3)
+        except OSError:
+            free_gb = 0
+            total_gb = 0
+
+        # 格式化
+        if folder_size >= 1024 ** 3:
+            size_str = f"{folder_size / (1024 ** 3):.1f} GB"
+        else:
+            size_str = f"{folder_size / (1024 ** 2):.0f} MB"
+
+        # 更新显示
+        self.disk_label.configure(
+            text=f"📁 录制: {size_str} ({file_count}个文件)    |    💾 磁盘剩余: {free_gb:.0f} / {total_gb:.0f} GB"
+        )
+
+        # 磁盘空间不足时变色提醒
+        if free_gb < 10:
+            self.disk_label.configure(text_color=COLORS["red"])
+        elif free_gb < 30:
+            self.disk_label.configure(text_color=COLORS["yellow"])
+        else:
+            self.disk_label.configure(text_color="#d0d0d0")
+
+        self.after(10000, self._update_disk_info)
 
     # ── 回调（从后台线程调用，需要 after 切到主线程）──────
 
